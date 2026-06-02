@@ -40,50 +40,30 @@ if uploaded:
         st.write("### Value counts")
         st.bar_chart(df[col].value_counts())
         
-        # --- НАДІЙНИЙ БЛОК ПОБУДОВИ ЧАСОВОЇ ДІАГРАМИ ---
+        # --- ОНОВЛЕНИЙ ІНТЕРАКТИВНИЙ БЛОК ГРАФІКА ЧАСУ ---
         time_col = None
         
-        # 1. Спочатку шукаємо за ключовими словами
+        # 1. Шукаємо стовпець часу (враховуючи переклади сторінки)
         for c in df.columns:
             c_low = str(c).lower().strip()
             if 'timestamp' in c_low or 'time' in c_low or 'познач' in c_low or 'час' in c_low or 'дата' in c_low:
                 time_col = c
                 break
         
-        # 2. Якщо за назвою не знайшли, беремо найпершу колонку таблиці
+        # 2. Якщо за назвою не знайшли, беремо найпершу колонку
         if time_col is None and len(df.columns) > 0:
             time_col = df.columns[0]
         
         if time_col:
-            # Змінено текстове відображення над графіком за вашою вимогою
-            st.write("### Часова діаграма активності підозрілих IP-адрес")
+            # Новий заголовок над графіком
+            st.write("## Часова діаграма активності підозрілих IP-адрес")
             
-            # Групуємо дані за знайденим стовпцем часу
-            time_counts = df.groupby(time_col)[col].count()
+            # Групуємо дані: рахуємо кількість записів для кожної мітки часу
+            # Називаємо колонку 'Граф 1', щоб у підказці при наведенні було точне слово
+            chart_data = df.groupby(time_col).size().to_frame(name="Граф 1")
             
-            # Налаштування стилю графіка (копія вашого скриншоту)
-            fig, ax = plt.subplots(figsize=(15, 4))
-            
-            # Малюємо сині стовпчики з тонкими білими межами
-            time_counts.plot(kind='bar', color='#0066cc', edgecolor='white', linewidth=0.5, ax=ax, width=0.8)
-            
-            # Змінено внутрішню назву графіка відповідно до вашої теми
-            ax.set_title("Часова діаграма активності підозрілих IP-адрес", fontsize=16, loc='left', pad=15)
-            ax.set_xlabel("") 
-            ax.set_ylabel("")
-            
-            # Вертикальні підписи дат (кут 90 градусів)
-            ax.set_xticklabels(time_counts.index, rotation=90, fontsize=8, color='#555555')
-            
-            # Мінімалістичний стиль сітки та меж
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            ax.spines['left'].set_color('#cccccc')
-            ax.spines['bottom'].set_color('#cccccc')
-            ax.grid(axis='y', linestyle='-', alpha=0.3)
-            
-            plt.tight_layout()
-            st.pyplot(fig)
+            # Будуємо інтерактивний графік Streamlit фірмового синього кольору
+            st.bar_chart(chart_data, color="#0066cc")
         else:
             st.warning("⚠️ Не вдалося визначити стовпець часу в таблиці.")
         # ----------------------------------------------------
