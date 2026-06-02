@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="Log Analyzer", layout="wide")
 
@@ -8,9 +7,11 @@ st.title("📊 Log Analyzer (Streamlit)")
 
 def plot_port_distribution_by_scan_type(df):
     if 'port' not in df.columns or 'scan_type' not in df.columns:
-        st.info("ℹ️ Для побудови 'Рисунку 3.2' необхідні стовпці 'port' та 'scan_type'.")
+        st.warning("⚠️ Columns 'port' and 'scan_type' not found in dataset")
         return
 
+    # Імпортуємо pyplot локально, щоб не навантажувати додаток без потреби
+    import matplotlib.pyplot as plt
     grouped = df.groupby(['scan_type', 'port']).size().unstack(fill_value=0)
 
     fig, ax = plt.subplots()
@@ -40,52 +41,29 @@ if uploaded:
         st.write("### Value counts")
         st.bar_chart(df[col].value_counts())
         
-        # --- НАДІЙНИЙ БЛОК ПОБУДОВИ ЧАСОВОЇ ДІАГРАМИ ---
+        # --- БЛОК ІДЕНТИЧНОЇ ЧАСОВОЇ ДІАГРАМИ (ЯК НА СКРИНШОТІ) ---
         time_col = None
-        
-        # 1. Спочатку шукаємо за ключовими словами
+        # Автоматичний пошук колонки часу (враховуючи можливі переклади браузера)
         for c in df.columns:
             c_low = str(c).lower().strip()
             if 'timestamp' in c_low or 'time' in c_low or 'познач' in c_low or 'час' in c_low or 'дата' in c_low:
                 time_col = c
                 break
         
-        # 2. Якщо за назвою не знайшли, беремо найпершу колонку таблиці
+        # Якщо за назвою не знайшли, беремо першу колонку
         if time_col is None and len(df.columns) > 0:
             time_col = df.columns[0]
-        
+
         if time_col:
-            st.write(f"### Часова діаграма для значення вартості ({col}) за колонкою '{time_col}'")
+            st.write("## Значення вартості")
             
-            # Групуємо дані за знайденим стовпцем часу
-            time_counts = df.groupby(time_col)[col].count()
+            # Створюємо зведену таблицю, де індексом є час, а значенням — кількість подій (Граф 1)
+            # Переіменовуємо колонку в 'Граф 1', щоб підказка при наведенні була як на скриншоті
+            chart_data = df.groupby(time_col).size().to_frame(name="Граф 1")
             
-            # Налаштування стилю графіка (копія вашого скриншоту)
-            fig, ax = plt.subplots(figsize=(15, 4))
-            
-            # Малюємо сині стовпчики з тонкими білими межами
-            time_counts.plot(kind='bar', color='#0066cc', edgecolor='white', linewidth=0.5, ax=ax, width=0.8)
-            
-            # Налаштування осей та назви
-            ax.set_title("Значення вартості", fontsize=16, loc='left', pad=15)
-            ax.set_xlabel("") 
-            ax.set_ylabel("")
-            
-            # Вертикальні підписи дат (кут 90 градусів)
-            ax.set_xticklabels(time_counts.index, rotation=90, fontsize=8, color='#555555')
-            
-            # Мінімалістичний стиль сітки та меж
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            ax.spines['left'].set_color('#cccccc')
-            ax.spines['bottom'].set_color('#cccccc')
-            ax.grid(axis='y', linestyle='-', alpha=0.3)
-            
-            plt.tight_layout()
-            st.pyplot(fig)
-        else:
-            st.warning("⚠️ Не вдалося визначити стовпець часу в таблиці.")
-        # ----------------------------------------------------
+            # Будуємо оригінальний інтерактивний графік Streamlit
+            st.bar_chart(chart_data, color="#0066cc")
+        # -------------------------------------------------------------------------
 
     st.write("## 📌 Рисунок 3.2 — Розподіл портів за типом атаки")
     plot_port_distribution_by_scan_type(df)
