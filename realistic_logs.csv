@@ -46,4 +46,5 @@ timestamp,ip,level,method,endpoint,status_code,response_time_sec
 2026-01-01 03:40:00,192.168.1.21,INFO,POST,/api/report,403,0.224
 2026-01-01 03:45:00,192.168.1.219,WARNING,PUT,/api/login,400,0.806
 2026-01-01 03:50:00,192.168.1.103,INFO,POST,/api/login,404,0.588
-2026-01-01 03:55:00,
+2026-01-01 03:55:00,192.168.1.198,INFO,GET,/api/logout,201,0.5
+2026-01-01 04:00:00,192.168.1.250,ERROR,PUT,/api/user,200,1.378
