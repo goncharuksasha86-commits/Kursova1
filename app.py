@@ -41,7 +41,7 @@ if uploaded:
         st.write("### Value counts")
         st.bar_chart(df[col].value_counts())
 
-    st.write("## 📌 Рисунок 3.2 — Розподіл портів за типом атаки")
+    st.write("Розподіл портів за типом атаки")
     plot_port_distribution_by_scan_type(df)
 
 else:
