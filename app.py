@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import altair as alt
 
 st.set_page_config(page_title="Log Analyzer", layout="wide")
 
@@ -15,7 +16,7 @@ def plot_port_distribution_by_scan_type(df):
 
     fig, ax = plt.subplots()
     grouped.T.plot(kind='bar', ax=ax)
-    ax.set_title("Розподіл сканованих portent за типом атаки (Рисунок 3.2)")
+    ax.set_title("Розподіл сканованих портів за типом атаки (Рисунок 3.2)")
     ax.set_xlabel("Port")
     ax.set_ylabel("Count")
 
@@ -34,32 +35,42 @@ if uploaded:
     if st.checkbox("Show columns"):
         st.write(df.columns.tolist())
 
-    # --- НАДІЙНИЙ БЛОК ДЛЯ ІНТЕРАКТИВНОЇ ЧАСОВОЇ ДІАГРАМИ ---
+    # --- ОНОВЛЕНИЙ БЛОК ДЛЯ ГРАФІКА ЧАСУ ЧЕРЕЗ ALTAIR ---
     time_col = None
-    
-    # Шукаємо точну назву стовпця часу у вашому CSV файлі
+    # Автоматично шукаємо стовпець часу
     for c in df.columns:
         c_low = str(c).lower().strip()
-        if 'познач' in c_low or 'час' in c_low or 'timestamp' in c_low or 'time' in c_low or 'дата' in c_low:
+        if 'timestamp' in c_low or 'time' in c_low or 'познач' in c_low or 'час' in c_low or 'дата' in c_low:
             time_col = c
             break
+
+    if time_col is None and len(df.columns) > 0:
+        time_col = df.columns[0]
 
     if time_col:
         st.write("## Часова діаграма активності підозрілих IP-адрес")
         
-        # Створюємо датафрейм, де групуємо дані строго за часом (вісь X)
-        chart_data = df.groupby(time_col).size().to_frame(name="Граф 1")
+        # Групуємо дані за часом та рахуємо кількість подій
+        chart_data = df.groupby(time_col).size().reset_index(name="Граф 1")
+        # Примусово робимо час текстовим форматом для красивих підписів
+        chart_data[time_col] = chart_data[time_col].astype(str)
         
-        # Перетворюємо мітки часу на текст, щоб відображалися вертикально і без збоїв
-        chart_data.index = chart_data.index.astype(str)
+        # Будуємо графік за допомогою Altair для точного відображення підписів дат
+        chart = alt.Chart(chart_data).mark_bar(color="#0066cc").encode(
+            x=alt.X(f"{time_col}:N", title="", axis=alt.Axis(labelAngle=-90, labelFontSize=10)),
+            y=alt.Y("Граф 1:Q", title=""),
+            tooltip=[alt.Tooltip(f"{time_col}:N", title="Часова мітка"), alt.Tooltip("Граф 1:Q", title="Граф 1")]
+        ).properties(
+            width='container',
+            height=400
+        )
         
-        # Відображаємо фірмовий синій інтерактивний графік Streamlit
-        st.bar_chart(chart_data, color="#0066cc")
+        st.altair_chart(chart, use_container_width=True)
     else:
-        st.warning("⚠️ Не вдалося знайти стовпець із часовою міткою (наприклад, 'позначка часу') у файлі.")
+        st.warning("⚠️ Не вдалося знайти стовпець часу у файлі.")
     # ----------------------------------------------------------------------
 
-    # Аналіз інших колонок за вибором (знаходиться нижче часового графіка)
+    # Селектбокс для аналізу інших колонок
     col = st.selectbox("Select column to analyze", df.columns)
     if col:
         st.write(f"### Розподіл для значення: {col}")
