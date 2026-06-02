@@ -34,37 +34,36 @@ if uploaded:
     if st.checkbox("Show columns"):
         st.write(df.columns.tolist())
 
-    col = st.selectbox("Select column to analyze", df.columns)
+    # --- САМОСТІЙНИЙ БЛОК ДЛЯ ДІАГРАМИ ЧАСУ ---
+    time_col = None
+    # Автоматично шукаємо колонку з часом у файлі
+    for c in df.columns:
+        c_low = str(c).lower().strip()
+        if 'timestamp' in c_low or 'time' in c_low or 'познач' in c_low or 'час' in c_low or 'дата' in c_low:
+            time_col = c
+            break
 
+    # Якщо за ключовими словами не знайшли, беремо першу колонку таблиці
+    if time_col is None and len(df.columns) > 0:
+        time_col = df.columns[0]
+
+    if time_col:
+        st.write("## Часова діаграма активності підозрілих IP-адрес")
+        
+        # Групуємо дані СТРОГО за часом (вісь X) і рахуємо кількість подій (Граф 1)
+        chart_data = df.groupby(time_col).size().to_frame(name="Граф 1")
+        
+        # Малюємо синій інтерактивний графік
+        st.bar_chart(chart_data, color="#0066cc")
+    else:
+        st.warning("⚠️ Не вдалося знайти стовпець часу для побудови діаграми активності.")
+    # --------------------------------------------------
+
+    # Стандартний селектбокс (аналіз інших колонок за вибором)
+    col = st.selectbox("Select column to analyze", df.columns)
     if col:
-        st.write("### Value counts")
+        st.write(f"### Розподіл для значення: {col}")
         st.bar_chart(df[col].value_counts())
-        
-        # --- ПРАВИЛЬНИЙ ІНТЕРАКТИВНИЙ БЛОК ГРАФІКА ЧАСУ ---
-        time_col = None
-        
-        # Шукаємо стовпець часу (враховуючи переклади та регістр)
-        for c in df.columns:
-            c_low = str(c).lower().strip()
-            if 'timestamp' in c_low or 'time' in c_low or 'познач' in c_low or 'час' in c_low or 'дата' in c_low:
-                time_col = c
-                break
-        
-        # Якщо за назвою не знайшли, беремо найпершу колонку таблиці
-        if time_col is None and len(df.columns) > 0:
-            time_col = df.columns[0]
-        
-        if time_col:
-            st.write("## Часова діаграма активності підозрілих IP-адрес")
-            
-            # Рахуємо кількість подій строго для КОЖНОЇ мітки часу (на осі X буде час!)
-            chart_data = df.groupby(time_col).size().to_frame(name="Граф 1")
-            
-            # Малюємо рідну інтерактивну діаграму Streamlit
-            st.bar_chart(chart_data, color="#0066cc")
-        else:
-            st.warning("⚠️ Не вдалося визначити стовпець часу в таблиці.")
-        # ----------------------------------------------------
 
     st.write("## 📌 Рисунок 3.2 — Розподіл портів за типом атаки")
     plot_port_distribution_by_scan_type(df)
