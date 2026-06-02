@@ -40,20 +40,36 @@ if uploaded:
         st.write("### Value counts")
         st.bar_chart(df[col].value_counts())
         
-        # --- БЛОК ПОБУДОВИ ЧАСОВОЇ ДІАГРАМИ ---
-        if 'timestamp' in df.columns:
+        # --- РОЗУМНИЙ БЛОК ПОБУДОВИ ЧАСОВОЇ ДІАГРАМИ ---
+        # Шукаємо стовпець часу автоматично (за ключовими словами)
+        time_col = None
+        for c in df.columns:
+            c_low = str(c).lower().strip()
+            if 'timestamp' in c_low or 'time' in c_low or 'познач' in c_low or 'час' in c_low:
+                time_col = c
+                break
+        
+        if time_col:
             st.write(f"### Часова діаграма для значення вартості ({col})")
             
-            time_counts = df.groupby('timestamp')[col].count()
+            # Групуємо дані за знайденим стовпцем часу
+            time_counts = df.groupby(time_col)[col].count()
             
+            # Налаштування стилю графіка (копія вашого скриншоту)
             fig, ax = plt.subplots(figsize=(15, 4))
+            
+            # Малюємо сині стовпчики з тонкими білими межами
             time_counts.plot(kind='bar', color='#0066cc', edgecolor='white', linewidth=0.5, ax=ax, width=0.8)
             
+            # Налаштування осей та назви
             ax.set_title("Значення вартості", fontsize=16, loc='left', pad=15)
             ax.set_xlabel("") 
             ax.set_ylabel("")
+            
+            # Вертикальні підписи дат (кут 90 градусів)
             ax.set_xticklabels(time_counts.index, rotation=90, fontsize=8, color='#555555')
             
+            # Мінімалістичний стиль сітки та меж
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
             ax.spines['left'].set_color('#cccccc')
@@ -63,7 +79,7 @@ if uploaded:
             plt.tight_layout()
             st.pyplot(fig)
         else:
-            st.warning("⚠️ Стовпець 'timestamp' не знайдено в завантаженому файлі.")
+            st.warning("⚠️ Не вдалося знайти стовпець із часовою міткою (наприклад, timestamp або позначка часу) у вашому файлі.")
         # ----------------------------------------------------
 
     st.write("## 📌 Рисунок 3.2 — Розподіл портів за типом атаки")
