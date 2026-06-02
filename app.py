@@ -39,6 +39,43 @@ if uploaded:
     if col:
         st.write("### Value counts")
         st.bar_chart(df[col].value_counts())
+        
+        # --- НОВИЙ БЛОК: Побудова точної часової діаграми ---
+        # Перевіряємо, чи є в датасеті стовпець з часом (наприклад, 'timestamp' або 'time')
+        time_col = next((c for c in df.columns if 'time' in c.lower() or 'date' in c.lower()), None)
+        
+        if time_col:
+            st.write(f"### Часова діаграма для значення вартості ({col})")
+            
+            # Групуємо дані за часом та рахуємо кількість записів обраного стовпця (наприклад, scan_type)
+            time_counts = df.groupby(time_col)[col].count()
+            
+            # Налаштування стилю графіка, як на зображенні
+            fig, ax = plt.subplots(figsize=(14, 4))
+            
+            # Малюємо сині стовпчики з тонкими білими межами
+            time_counts.plot(kind='bar', color='#0066cc', edgecolor='white', linewidth=0.5, ax=ax, width=0.8)
+            
+            # Налаштування осей та назви
+            ax.set_title("Значення вартості", fontsize=16, loc='left', pad=15)
+            ax.set_xlabel("") # Прибираємо назву осі X, бо там і так дати
+            ax.set_ylabel("")
+            
+            # Повертаємо підписи дат вертикально на 90 градусів і робимо їх сірими
+            ax.set_xticklabels(time_counts.index, rotation=90, fontsize=8, color='#555555')
+            
+            # Налаштування сітки та меж (мінімалістичний стиль)
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['left'].set_color('#cccccc')
+            ax.spines['bottom'].set_color('#cccccc')
+            ax.grid(axis='y', linestyle='-', alpha=0.3)
+            
+            # Відображаємо графік у Streamlit
+            st.pyplot(fig)
+        else:
+            st.info("ℹ️ Для побудови часової діаграми у таблиці має бути стовпець із часовою міткою (наприклад, timestamp або time).")
+        # ----------------------------------------------------
 
     st.write("## 📌 Рисунок 3.2 — Розподіл портів за типом атаки")
     plot_port_distribution_by_scan_type(df)
