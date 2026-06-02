@@ -22,11 +22,10 @@ def plot_port_distribution_by_scan_type(df):
     plt.tight_layout()
 
     st.pyplot(fig)
-    plt.close(fig)  # Очищуємо пам'ять
+    plt.close(fig)
 
 # --- ФУНКЦІЯ 2: Часова діаграма активності IP (НОВА) ---
 def plot_ip_activity_over_time(df):
-    # Тимчасово закладаємо стандартні назви колонок, змініть під свій CSV, якщо вони інші
     time_col = 'timestamp'  
     ip_col = 'source_ip'    
     
@@ -34,14 +33,11 @@ def plot_ip_activity_over_time(df):
         st.warning(f"⚠️ Для часової діаграми потрібні колонки '{time_col}' та '{ip_col}'")
         return
 
-    # Робимо копію, щоб не змінювати оригінальний датафрейм
     df_time = df.copy()
     
-    # Конвертуємо час та округляємо до годин (або хвилин, якщо лог короткий)
     df_time[time_col] = pd.to_datetime(df_time[time_col])
     df_time['time_bucket'] = df_time[time_col].dt.round('H') 
     
-    # Групуємо дані для побудови тренду
     timeline = df_time.groupby(['time_bucket', ip_col]).size().unstack(fill_value=0)
     
     fig, ax = plt.subplots(figsize=(12, 5))
@@ -55,37 +51,7 @@ def plot_ip_activity_over_time(df):
     plt.tight_layout()
     
     st.pyplot(fig)
-    plt.close(fig)  # Очищуємо пам'ять
+    plt.close(fig)
 
 # --- ОСНОВНА ЛОГІКА ДОДАТКА ---
-uploaded = st.file_uploader("Upload log file (CSV)", type=["csv"])
-
-if uploaded:
-    df = pd.read_csv(uploaded)
-    st.write("### Data Preview")
-    st.dataframe(df)
-
-    if st.checkbox("Show basic stats"):
-        st.write(df.describe())
-
-    if st.checkbox("Show columns"):
-        st.write(df.columns.tolist())
-
-    col = st.selectbox("Select column to analyze", df.columns)
-
-    if col:
-        st.write("### Value counts")
-        st.bar_chart(df[col].value_counts())
-
-    # Виклик першого графіка
-    st.markdown("---")
-    st.write("## 📌 Розподіл портів за типом атаки")
-    plot_port_distribution_by_scan_type(df)
-
-    # Виклик НОВОГО графіка
-    st.markdown("---")
-    st.write("## 📌 Часова діаграма активності IP-адрес")
-    plot_ip_activity_over_time(df)
-
-else:
-    st.info("Upload a CSV file to start")
+uploaded = st.file_uploader("
