@@ -34,9 +34,9 @@ if uploaded:
     if st.checkbox("Show columns"):
         st.write(df.columns.tolist())
 
-    # --- САМОСТІЙНИЙ БЛОК ДЛЯ ДІАГРАМИ ЧАСУ ---
+    # --- САМОСТІЙНИЙ БЛОК ДЛЯ ІНТЕРАКТИВНОЇ ДІАГРАМИ ЧАСУ ---
     time_col = None
-    # Автоматично шукаємо колонку з часом у файлі
+    # Автоматично шукаємо стовпець часу у файлі
     for c in df.columns:
         c_low = str(c).lower().strip()
         if 'timestamp' in c_low or 'time' in c_low or 'познач' in c_low or 'час' in c_low or 'дата' in c_low:
@@ -50,16 +50,20 @@ if uploaded:
     if time_col:
         st.write("## Часова діаграма активності підозрілих IP-адрес")
         
-        # Групуємо дані СТРОГО за часом (вісь X) і рахуємо кількість подій (Граф 1)
+        # 1. Групуємо дані за часом та рахуємо кількість подій
         chart_data = df.groupby(time_col).size().to_frame(name="Граф 1")
         
-        # Малюємо синій інтерактивний графік
+        # 🔥 ГОЛОВНЕ РІШЕННЯ: Перетворюємо індекс часу на ТЕКСТ.
+        # Це змусить Streamlit відображати дати послідовно (як на зразку), а не групувати їх за числами портів!
+        chart_data.index = chart_data.index.astype(str)
+        
+        # 2. Малюємо синій інтерактивний графік з кнопками та підказками
         st.bar_chart(chart_data, color="#0066cc")
     else:
         st.warning("⚠️ Не вдалося знайти стовпець часу для побудови діаграми активності.")
-    # --------------------------------------------------
+    # ----------------------------------------------------------------------
 
-    # Стандартний селектбокс (аналіз інших колонок за вибором)
+    # Стандартний аналіз інших стовпців з випадаючого списку
     col = st.selectbox("Select column to analyze", df.columns)
     if col:
         st.write(f"### Розподіл для значення: {col}")
@@ -67,6 +71,9 @@ if uploaded:
 
     st.write("## 📌 Рисунок 3.2 — Розподіл портів за типом атаки")
     plot_port_distribution_by_scan_type(df)
+
+else:
+    st.info("Upload a CSV file to start")
 
 else:
     st.info("Upload a CSV file to start")
