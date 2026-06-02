@@ -40,17 +40,22 @@ if uploaded:
         st.write("### Value counts")
         st.bar_chart(df[col].value_counts())
         
-        # --- РОЗУМНИЙ БЛОК ПОБУДОВИ ЧАСОВОЇ ДІАГРАМИ ---
-        # Шукаємо стовпець часу автоматично (за ключовими словами)
+        # --- НАДІЙНИЙ БЛОК ПОБУДОВИ ЧАСОВОЇ ДІАГРАМИ ---
         time_col = None
+        
+        # 1. Спочатку шукаємо за ключовими словами
         for c in df.columns:
             c_low = str(c).lower().strip()
-            if 'timestamp' in c_low or 'time' in c_low or 'познач' in c_low or 'час' in c_low:
+            if 'timestamp' in c_low or 'time' in c_low or 'познач' in c_low or 'час' in c_low or 'дата' in c_low:
                 time_col = c
                 break
         
+        # 2. Якщо за назвою не знайшли, беремо найпершу колонку таблиці
+        if time_col is None and len(df.columns) > 0:
+            time_col = df.columns[0]
+        
         if time_col:
-            st.write(f"### Часова діаграма для значення вартості ({col})")
+            st.write(f"### Часова діаграма для значення вартості ({col}) за колонкою '{time_col}'")
             
             # Групуємо дані за знайденим стовпцем часу
             time_counts = df.groupby(time_col)[col].count()
@@ -79,7 +84,7 @@ if uploaded:
             plt.tight_layout()
             st.pyplot(fig)
         else:
-            st.warning("⚠️ Не вдалося знайти стовпець із часовою міткою (наприклад, timestamp або позначка часу) у вашому файлі.")
+            st.warning("⚠️ Не вдалося визначити стовпець часу в таблиці.")
         # ----------------------------------------------------
 
     st.write("## 📌 Рисунок 3.2 — Розподіл портів за типом атаки")
