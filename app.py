@@ -15,7 +15,7 @@ def plot_port_distribution_by_scan_type(df):
 
     fig, ax = plt.subplots()
     grouped.T.plot(kind='bar', ax=ax)
-    ax.set_title("Розподіл сканованих портів за типом атаки (Рисунок 3.2)")
+    ax.set_title("Розподіл сканованих portent за типом атаки (Рисунок 3.2)")
     ax.set_xlabel("Port")
     ax.set_ylabel("Count")
 
@@ -25,10 +25,6 @@ uploaded = st.file_uploader("Upload log file (CSV)", type=["csv"])
 
 if uploaded:
     df = pd.read_csv(uploaded)
-    
-    # 🔥 КРОК 1: Очищаємо назви ВСІХ стовпців від прихованих пробілів та символів переносу
-    df.columns = df.columns.str.strip().str.replace(r'\s+', ' ', regex=True)
-    
     st.write("### Data Preview")
     st.dataframe(df)
 
@@ -38,36 +34,39 @@ if uploaded:
     if st.checkbox("Show columns"):
         st.write(df.columns.tolist())
 
-    # --- СУПЕР-НАДІЙНИЙ БЛОК ШУКАЧА ЧАСУ ---
+    # --- НАДІЙНИЙ БЛОК ДЛЯ ІНТЕРАКТИВНОЇ ЧАСОВОЇ ДІАГРАМИ ---
     time_col = None
     
-    # Спочатку шукаємо за ключовими словами
+    # Шукаємо точну назву стовпця часу у вашому CSV файлі
     for c in df.columns:
         c_low = str(c).lower().strip()
         if 'познач' in c_low or 'час' in c_low or 'timestamp' in c_low or 'time' in c_low or 'дата' in c_low:
             time_col = c
             break
 
-    # 🔥 РЕЗЕРВНИЙ ВАРІАНТ: Якщо за текстом не знайшли, беремо НАЙПЕРШУ колонку таблиці
-    if time_col is None and len(df.columns) > 0:
-        time_col = df.columns[0]
-
     if time_col:
         st.write("## Часова діаграма активності підозрілих IP-адрес")
         
-        # Очищаємо текстові значення дат від слова "рік", щоб повернути стандартний формат
-        df[time_col] = df[time_col].astype(str).str.replace('рік', '', case=False).str.strip()
-        
-        # Групуємо дані строго за цією часовою колонкою
+        # Створюємо датафрейм, де групуємо дані строго за часом (вісь X)
         chart_data = df.groupby(time_col).size().to_frame(name="Граф 1")
         
-        # Перетворюємо індекс на текст для коректного відображення осей
+        # Перетворюємо мітки часу на текст, щоб відображалися вертикально і без збоїв
         chart_data.index = chart_data.index.astype(str)
         
-        # Малюємо синій інтерактивний графік
+        # Відображаємо фірмовий синій інтерактивний графік Streamlit
         st.bar_chart(chart_data, color="#0066cc")
     else:
-        st.warning("⚠️ Не вдалося знайти жодного стовпця в таблиці.")
+        st.warning("⚠️ Не вдалося знайти стовпець із часовою міткою (наприклад, 'позначка часу') у файлі.")
     # ----------------------------------------------------------------------
 
-    # Селектбокс нижче
+    # Аналіз інших колонок за вибором (знаходиться нижче часового графіка)
+    col = st.selectbox("Select column to analyze", df.columns)
+    if col:
+        st.write(f"### Розподіл для значення: {col}")
+        st.bar_chart(df[col].value_counts())
+
+    st.write("## 📌 Рисунок 3.2 — Розподіл портів за типом атаки")
+    plot_port_distribution_by_scan_type(df)
+
+else:
+    st.info("Upload a CSV file to start")
