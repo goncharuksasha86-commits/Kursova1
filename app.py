@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import altair as alt
 
 st.set_page_config(page_title="Log Analyzer", layout="wide")
 
@@ -34,42 +35,64 @@ if uploaded:
     if st.checkbox("Show columns"):
         st.write(df.columns.tolist())
 
-    # --- АВТОНОМНИЙ БЛОК ДЛЯ ІНТЕРАКТИВНОЇ ДІАГРАМИ ЧАСУ ---
+    # --- НАДІЙНИЙ БЛОК ГРАФІКА З ВИВЕДЕННЯМ ЧАСУ НА ОСЬ X ---
     time_col = None
-    
-    # 1. Автоматичний пошук колонки часу (ігноруючи переклад браузера чи регістр)
+    # Автоматично шукаємо колонку часу
     for c in df.columns:
         c_low = str(c).lower().strip()
         if 'timestamp' in c_low or 'time' in c_low or 'познач' in c_low or 'час' in c_low or 'дата' in c_low:
             time_col = c
             break
-            
-    # 2. Якщо за ключовими словами не знайшли, беремо найпершу колонку таблиці
+
     if time_col is None and len(df.columns) > 0:
         time_col = df.columns[0]
 
     if time_col:
         st.write("## Часова діаграма активності підозрілих IP-адрес")
         
-        # Створюємо таблицю: індексом (віссю X) стає час, значенням — кількість подій (Граф 1)
-        # Перетворюємо індекс на тип string, щоб Streamlit малював послідовні мітки часу
-        chart_data = df.groupby(time_col).size().to_frame(name="Граф 1")
-        chart_data.index = chart_data.index.astype(str)
+        # Групуємо дані за часом та рахуємо кількість подій
+        chart_data = df.groupby(time_col).size().reset_index(name="Граф 1")
         
-        # Будуємо синій інтерактивний графік
-        st.bar_chart(chart_data, color="#0066cc")
+        # Примусово перетворюємо в текст, щоб зафіксувати кожну дату
+        chart_data[time_col] = chart_data[time_col].astype(str)
+        
+        # Отримуємо повний список усіх унікальних дат, які маємо вивести на вісь X
+        unique_times = chart_data[time_col].unique().tolist()
+        
+        # Побудова графіка з жорстким виведенням усіх міток дат
+        chart = alt.Chart(chart_data).mark_bar(color="#0066cc").encode(
+            x=alt.X(
+                f"{time_col}:N", 
+                title="", 
+                axis=alt.Axis(
+                    labelAngle=-90,          # Поворот тексту на 90 градусів вертикально
+                    labelFontSize=9,         # Компактний розмір шрифту
+                    values=unique_times,     # 🔥 ПРИМУСОВО ВИВОДИТИ КОЖНУ ДАТУ НА ОСЬ X
+                    labelOverlap=False       # Забороняємо ховати підписи
+                )
+            ),
+            y=alt.Y("Граф 1:Q", title=""),
+            tooltip=[
+                alt.Tooltip(f"{time_col}:N", title="Часова мітка"), 
+                alt.Tooltip("Граф 1:Q", title="Граф 1")
+            ]
+        ).properties(
+            width='container',
+            height=380
+        )
+        
+        st.altair_chart(chart, use_container_width=True)
     else:
-        st.warning("⚠️ Не вдалося знайти стовпець із часовою міткою у файлі.")
+        st.warning("⚠️ Не вдалося знайти стовпець часу у файлі.")
     # ----------------------------------------------------------------------
 
-    # Селектбокс залишається нижче для аналізу інших характеристик за вибором
+    # Селектбокс нижче для аналізу інших характеристик за вибором
     col = st.selectbox("Select column to analyze", df.columns)
-
     if col:
         st.write(f"### Розподіл для значення: {col}")
         st.bar_chart(df[col].value_counts())
 
-    st.write("Розподіл портів за типом атаки")
+    st.write("## 📌 Рисунок 3.2 — Розподіл портів за типом атаки")
     plot_port_distribution_by_scan_type(df)
 
 else:
