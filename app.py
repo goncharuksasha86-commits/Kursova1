@@ -55,7 +55,8 @@ if uploaded:
             time_col = df.columns[0]
         
         if time_col:
-            st.write(f"### Часова діаграма для значення вартості ({col}) за колонкою '{time_col}'")
+            # Змінено текстове відображення над графіком за вашою вимогою
+            st.write("### Часова діаграма активності підозрілих IP-адрес")
             
             # Групуємо дані за знайденим стовпцем часу
             time_counts = df.groupby(time_col)[col].count()
@@ -66,8 +67,8 @@ if uploaded:
             # Малюємо сині стовпчики з тонкими білими межами
             time_counts.plot(kind='bar', color='#0066cc', edgecolor='white', linewidth=0.5, ax=ax, width=0.8)
             
-            # Налаштування осей та назви
-            ax.set_title("Значення вартості", fontsize=16, loc='left', pad=15)
+            # Змінено внутрішню назву графіка відповідно до вашої теми
+            ax.set_title("Часова діаграма активності підозрілих IP-адрес", fontsize=16, loc='left', pad=15)
             ax.set_xlabel("") 
             ax.set_ylabel("")
             
